@@ -7,6 +7,8 @@ class TasksEvent extends Equatable {
   List<Object> get props => [];
 }
 
+class LoadTasks extends TasksEvent {}
+
 class AddTask extends TasksEvent {
   final Task task;
   const AddTask({required this.task});

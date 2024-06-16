@@ -17,18 +17,29 @@ class MyApp extends StatelessWidget {
   // This widget is the root of your application.
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      debugShowCheckedModeBanner: false,
-      home: RepositoryProvider<TodoRepository>(
-        create: (context) => TodoRepository(),
-        child: BlocProvider(
-          create: (context) =>
-              TasksBloc(RepositoryProvider.of<TodoRepository>(context)),
-          child: TodoListPage(),
+    return RepositoryProvider(
+      create: (context) => TodoRepository(),
+      child: BlocProvider(
+        create: (context) => TasksBloc(context.read<TodoRepository>())..add(LoadTasks()),
+        child: MaterialApp(
+          debugShowCheckedModeBanner: false,
+          home: TodoListPage(),
+          theme: ThemeData.dark(),
         ),
       ),
-      // home: TodoListPage(),
-      theme: ThemeData.dark(),
     );
+    // return MaterialApp(
+    //   debugShowCheckedModeBanner: false,
+    //   home: RepositoryProvider<TodoRepository>(
+    //     create: (context) => TodoRepository(),
+    //     child: BlocProvider(
+    //       create: (context) =>
+    //           TasksBloc(RepositoryProvider.of<TodoRepository>(context)),
+    //       child: TodoListPage(),
+    //     ),
+    //   ),
+    //   // home: TodoListPage(),
+    //   theme: ThemeData.dark(),
+    // );
   }
 }

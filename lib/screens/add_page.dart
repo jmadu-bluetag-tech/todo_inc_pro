@@ -2,7 +2,9 @@ import 'dart:convert';
 
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
+import 'package:todo_inc_pro/model/task.dart';
 
+import '../blocs/bloc_exports.dart';
 import '../services/respositories.dart';
 
 class AddTodoPage extends StatefulWidget {
@@ -61,7 +63,8 @@ class _AddTodoPageState extends State<AddTodoPage> {
     }
 
     try {
-      final newTodo = await todoRepository.createTask(title, description);
+      final task = Task(title: title, description: description);
+      BlocProvider.of<TasksBloc>(context).add(AddTask(task: task));
 
       titleController.text = '';
       descriptionController.text = '';
