@@ -56,4 +56,15 @@ class TodoRepository {
       throw Exception('Failed to load todo with ID: $id');
     }
   }
+
+  Future<void> deleteTaskById(String id) async {
+    final url = 'https://api.nstack.in/v1/todos/$id';
+    final uri = Uri.parse(url);
+
+    final response = await http.delete(uri);
+
+    if (response.statusCode != 200) {
+      throw Exception('Failed to delete todo with ID: $id');
+    }
+  }
 }
