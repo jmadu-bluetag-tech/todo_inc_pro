@@ -43,5 +43,17 @@ class TodoRepository {
       throw Exception('Failed to create todo');
     }
   }
-}
 
+  Future<Task> fetchTodoById(String id) async {
+    final url = 'https://api.nstack.in/v1/todos/$id';
+    final uri = Uri.parse(url);
+    final response = await http.get(uri);
+
+    if (response.statusCode == 200) {
+      final Map<String, dynamic> json = jsonDecode(response.body);
+      return Task.fromJson(json['data']);
+    } else {
+      throw Exception('Failed to load todo with ID: $id');
+    }
+  }
+}
