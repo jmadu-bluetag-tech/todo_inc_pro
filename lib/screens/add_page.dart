@@ -8,7 +8,9 @@ import '../blocs/bloc_exports.dart';
 import '../services/respositories.dart';
 
 class AddTodoPage extends StatefulWidget {
-  const AddTodoPage({super.key});
+  final Task? task;
+  final bool isEditMode;
+  const AddTodoPage({super.key, this.task, this.isEditMode = false});
 
   @override
   State<AddTodoPage> createState() => _AddTodoPageState();
@@ -18,12 +20,19 @@ class _AddTodoPageState extends State<AddTodoPage> {
   TextEditingController titleController = TextEditingController();
   TextEditingController descriptionController = TextEditingController();
   final TodoRepository todoRepository = TodoRepository();
+
+  @override
+  void initState() {
+    super.initState();
+    titleController = TextEditingController(text: widget.task?.title ?? '');
+    descriptionController =
+        TextEditingController(text: widget.task?.description ?? '');
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Add Todo'),
-      ),
+      appBar: AppBar(title: Text(widget.isEditMode ? 'Edit Todo' : 'Add Todo')),
       body: ListView(
         padding: const EdgeInsets.all(12),
         children: [
@@ -45,8 +54,8 @@ class _AddTodoPageState extends State<AddTodoPage> {
             height: 20,
           ),
           ElevatedButton(
-            onPressed: submitData,
-            child: const Text('Submit'),
+            onPressed: widget.isEditMode ? updateData : submitData,
+            child: Text(widget.isEditMode ? 'Update' : 'Submit'),
           )
         ],
       ),
@@ -66,8 +75,8 @@ class _AddTodoPageState extends State<AddTodoPage> {
       final task = Task(title: title, description: description);
       BlocProvider.of<TasksBloc>(context).add(AddTask(task: task));
 
-      titleController.text = '';
-      descriptionController.text = '';
+      titleController.clear();
+      descriptionController.clear();
       showSuccessMessae('Task Created');
       Navigator.pop(context);
     } catch (e) {
@@ -79,6 +88,32 @@ class _AddTodoPageState extends State<AddTodoPage> {
       // } else {
       //   showErrorMessae('An unknown error occurred');
       // }
+    }
+  }
+
+  Future<void> updateData() async {
+    final title = titleController.text;
+    final description = descriptionController.text;
+
+    if (title.isEmpty || description.isEmpty) {
+      showErrorMessae('Title and Description cannot be empty');
+      return;
+    }
+
+    try {
+      final updatedTask = Task(
+        id: widget.task?.id ?? '',
+        title: title,
+        description: description,
+      );
+
+      BlocProvider.of<TasksBloc>(context).add(UpdateTask(task: updatedTask));
+
+      showSuccessMessae('Task Updated');
+      Navigator.pop(context);
+    } catch (e) {
+      print('Error: $e');
+      showErrorMessae('An error occurred: ${e.toString()}');
     }
   }
 

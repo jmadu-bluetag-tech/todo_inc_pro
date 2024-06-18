@@ -19,6 +19,8 @@ class TasksBloc extends Bloc<TasksEvent, TasksState> {
   }
 
   void _onLoadTasks(LoadTasks event, Emitter<TasksState> emit) async {
+    emit(TasksLoadingState());
+
     try {
       final tasks = await _todoRepository.fetchTask();
       emit(TasksState(allTasks: tasks));
@@ -29,10 +31,12 @@ class TasksBloc extends Bloc<TasksEvent, TasksState> {
   }
 
   void _onAddTask(AddTask event, Emitter<TasksState> emit) async {
+    emit(TasksLoadingState());
     try {
       final newTask = await _todoRepository.createTask(
           event.task.title, event.task.description);
       final updatedTasks = List<Task>.from(state.allTasks)..add(newTask);
+
       emit(TasksState(allTasks: updatedTasks));
     } catch (e) {
       // Handle error
@@ -40,8 +44,31 @@ class TasksBloc extends Bloc<TasksEvent, TasksState> {
     }
   }
 
-  void _onUpdateTask(UpdateTask event, Emitter<TasksState> emit) {}
+  void _onUpdateTask(UpdateTask event, Emitter<TasksState> emit) async {
+    emit(TasksLoadingState());
+    try {
+      // Update the task in the database
+      final updatedTask = await _todoRepository.updateTask(
+        event.task.id,
+        event.task.title,
+        event.task.description,
+      );
+
+      // Update the state with the updated task
+      final updatedTasks = state.allTasks.map((task) {
+        return task.id == updatedTask.id ? updatedTask : task;
+      }).toList();
+
+      // Emit the updated state
+
+      emit(TasksState(allTasks: updatedTasks));
+    } catch (e) {
+      print('Error updating task: $e');
+    }
+  }
+
   void _onDeleteTask(DeleteTask event, Emitter<TasksState> emit) {
+    emit(TasksLoadingState());
     final updatedTasks =
         state.allTasks.where((task) => task.id != event.task.id).toList();
     emit(TasksState(allTasks: updatedTasks));

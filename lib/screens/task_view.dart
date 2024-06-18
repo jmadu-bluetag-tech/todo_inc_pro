@@ -55,9 +55,9 @@ class _TaskViewState extends State<TaskView> {
           children: [
             Text(
               taskData.title,
-              style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+              style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
             ),
-            SizedBox(height: 10),
+            const SizedBox(height: 10),
             Text(taskData.description),
           ],
         ),

@@ -67,4 +67,27 @@ class TodoRepository {
       throw Exception('Failed to delete todo with ID: $id');
     }
   }
+
+  Future<Task> updateTask(String id, String title, String description) async {
+    final url = 'https://api.nstack.in/v1/todos/$id';
+    final uri = Uri.parse(url);
+    final body = {
+      "title": title,
+      "description": description,
+    };
+
+    final response = await http.put(
+      uri,
+      headers: {'Content-Type': 'application/json'},
+      body: jsonEncode(body),
+    );
+
+    if (response.statusCode == 200) {
+      final Map<String, dynamic> parsedResponse = jsonDecode(response.body);
+      final Map<String, dynamic> taskData = parsedResponse['data'];
+      return Task.fromJson(taskData);
+    } else {
+      throw Exception('Failed to update todo with ID: $id');
+    }
+  }
 }

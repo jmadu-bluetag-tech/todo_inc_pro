@@ -27,7 +27,9 @@ class _TodoListPageState extends State<TodoListPage> {
       ),
       body: BlocBuilder<TasksBloc, TasksState>(
         builder: (context, state) {
-          if (state.allTasks.isEmpty) {
+          if (state is TasksLoadingState) {
+            return Center(child: CircularProgressIndicator());
+          } else if (state.allTasks.isEmpty) {
             return Center(child: const Text('No tasks available.'));
           }
 
@@ -49,14 +51,30 @@ class _TodoListPageState extends State<TodoListPage> {
                   onTap: () {
                     navigateToTaskView(task.id);
                   },
-                  trailing: IconButton(
-                    icon: Icon(
-                      Icons.delete,
-                      color: Colors.redAccent,
-                    ),
-                    onPressed: () {
-                      _deleteTask(task);
-                    },
+                  trailing: PopupMenuButton(
+                    itemBuilder: ((context) => [
+                          PopupMenuItem(
+                            child: TextButton.icon(
+                              onPressed: () {
+                                navigateToEditPage(task);
+                              },
+                              label: const Text('Edit'),
+                              icon: const Icon(Icons.edit),
+                            ),
+                          ),
+                          PopupMenuItem(
+                            child: TextButton.icon(
+                              onPressed: () {
+                                _deleteTask(task);
+                              },
+                              label: const Text('Delete'),
+                              icon: const Icon(
+                                Icons.delete,
+                                color: Colors.redAccent,
+                              ),
+                            ),
+                          ),
+                        ]),
                   ),
                 ),
               );
@@ -114,6 +132,19 @@ class _TodoListPageState extends State<TodoListPage> {
   //   Navigator.push(context, route);
   // }
 
+  void navigateToEditPage(Task task) {
+    final route = MaterialPageRoute(
+      builder: (context) => AddTodoPage(
+        task: task,
+        isEditMode: true,
+      ),
+    );
+    // Close the popup menu
+    Navigator.pop(context);
+    print(task);
+    Navigator.push(context, route);
+  }
+
   void navigateToAddPage() {
     final route = MaterialPageRoute(builder: (context) => AddTodoPage());
     Navigator.push(context, route);
@@ -123,6 +154,9 @@ class _TodoListPageState extends State<TodoListPage> {
     try {
       await todoRepository.deleteTaskById(task.id);
       BlocProvider.of<TasksBloc>(context).add(DeleteTask(task: task));
+
+      // Close the popup menu
+      Navigator.pop(context);
     } catch (e) {
       print('Error deleting task: $e');
     }
