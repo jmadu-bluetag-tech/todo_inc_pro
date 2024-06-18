@@ -19,6 +19,7 @@ class TodoListPage extends StatefulWidget {
 
 class _TodoListPageState extends State<TodoListPage> {
   final TodoRepository todoRepository = TodoRepository();
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -29,80 +30,63 @@ class _TodoListPageState extends State<TodoListPage> {
         builder: (context, state) {
           if (state is TasksLoadingState) {
             return Center(child: CircularProgressIndicator());
-          } else if (state.allTasks.isEmpty) {
-            return Center(child: const Text('No tasks available.'));
-          }
+          } else if (state is TasksErrorState) {
+            return Center(child: Text(state.message));
+          } else if (state is TasksLoadedState) {
+            if (state.allTasks.isEmpty) {
+              return Center(child: const Text('No tasks available.'));
+            }
 
-          return ListView.builder(
-            itemCount: state.allTasks.length,
-            itemBuilder: (context, index) {
-              final task = state.allTasks[index];
-              return Card(
-                color: Colors.grey[850],
-                child: ListTile(
-                  title: Text(
-                    task.title,
-                    style: const TextStyle(color: Colors.white),
-                  ),
-                  subtitle: Text(
-                    task.description,
-                    style: const TextStyle(color: Colors.white70),
-                  ),
-                  onTap: () {
-                    navigateToTaskView(task.id);
-                  },
-                  trailing: PopupMenuButton(
-                    itemBuilder: ((context) => [
-                          PopupMenuItem(
-                            child: TextButton.icon(
-                              onPressed: () {
-                                navigateToEditPage(task);
-                              },
-                              label: const Text('Edit'),
-                              icon: const Icon(Icons.edit),
-                            ),
-                          ),
-                          PopupMenuItem(
-                            child: TextButton.icon(
-                              onPressed: () {
-                                _deleteTask(task);
-                              },
-                              label: const Text('Delete'),
-                              icon: const Icon(
-                                Icons.delete,
-                                color: Colors.redAccent,
+            return ListView.builder(
+              itemCount: state.allTasks.length,
+              itemBuilder: (context, index) {
+                final task = state.allTasks[index];
+                return Card(
+                  color: Colors.grey[850],
+                  child: ListTile(
+                    title: Text(
+                      task.title,
+                      style: const TextStyle(color: Colors.white),
+                    ),
+                    subtitle: Text(
+                      task.description,
+                      style: const TextStyle(color: Colors.white70),
+                    ),
+                    onTap: () {
+                      navigateToTaskView(task.id);
+                    },
+                    trailing: PopupMenuButton(
+                      itemBuilder: ((context) => [
+                            PopupMenuItem(
+                              child: TextButton.icon(
+                                onPressed: () {
+                                  navigateToEditPage(task.id);
+                                },
+                                label: const Text('Edit'),
+                                icon: const Icon(Icons.edit),
                               ),
                             ),
-                          ),
-                        ]),
+                            PopupMenuItem(
+                              child: TextButton.icon(
+                                onPressed: () {
+                                  _deleteTask(task);
+                                },
+                                label: const Text('Delete'),
+                                icon: const Icon(
+                                  Icons.delete,
+                                  color: Colors.redAccent,
+                                ),
+                              ),
+                            ),
+                          ]),
+                    ),
                   ),
-                ),
-              );
-            },
-          );
-          // return ListView.builder(
-          //   itemCount: state.allTasks.length,
-          //   itemBuilder: (context, index) {
-          //     void navigateToTaskView() async {
-          //       final String taskId =
-          //           state.allTasks[index].id; // Get task ID from current task
-          //       final selectedTask = await todoRepository.fetchTodoById(taskId);
-          //       final route = MaterialPageRoute(
-          //           builder: (context) => TaskView(taskData: selectedTask));
-          //       Navigator.push(context, route);
-          //     }
-
-          //     final task = state.allTasks[index];
-          //     return ListTile(
-          //       title: Text(task.title),
-          //       subtitle: Text(task.description),
-          //       onTap: () {
-          //         navigateToTaskView();
-          //       },
-          //       trailing: Icon(Icons.delete),
-          //     );
-          //   },
-          // );
+                );
+              },
+            );
+          } else {
+            return Center(child: Text('Unknown state'));
+          }
         },
       ),
       floatingActionButton: FloatingActionButton.extended(
@@ -114,34 +98,25 @@ class _TodoListPageState extends State<TodoListPage> {
 
   void navigateToTaskView(String taskId) async {
     try {
-      // Fetch task data using fetchTodoById
       final taskData = await todoRepository.fetchTodoById(taskId);
       final route = MaterialPageRoute(
         builder: (context) => TaskView(taskData: taskData),
       );
       Navigator.push(context, route);
     } catch (e) {
-      // Handle error
       print('Error fetching task: $e');
     }
   }
-  // void navigateToTaskView() {
-  //   // Fetch taskData data using fetchTodoById
-  //   taskData = todoRepository.fetchTodoById(taskID);
-  //   final route = MaterialPageRoute(builder: (context) => TaskView());
-  //   Navigator.push(context, route);
-  // }
 
-  void navigateToEditPage(Task task) {
+  void navigateToEditPage(String taskId) async {
+    final task = await todoRepository.fetchTodoById(taskId);
     final route = MaterialPageRoute(
       builder: (context) => AddTodoPage(
         task: task,
         isEditMode: true,
       ),
     );
-    // Close the popup menu
     Navigator.pop(context);
-    print(task);
     Navigator.push(context, route);
   }
 
@@ -154,8 +129,6 @@ class _TodoListPageState extends State<TodoListPage> {
     try {
       await todoRepository.deleteTaskById(task.id);
       BlocProvider.of<TasksBloc>(context).add(DeleteTask(task: task));
-
-      // Close the popup menu
       Navigator.pop(context);
     } catch (e) {
       print('Error deleting task: $e');
